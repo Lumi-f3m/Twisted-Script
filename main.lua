@@ -10,59 +10,60 @@ local CoreGui = game:GetService("CoreGui")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 
--- Cleanup
+-- Cleanup existing UI
 if CoreGui:FindFirstChild("NHack_Glass") then CoreGui.NHack_Glass:Destroy() end
 
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "NHack_Glass"
 ScreenGui.Parent = CoreGui
+ScreenGui.ResetOnSpawn = false
 
--- Floating Toggle (Now a sleek "NH" pill)
+-- Top Pill Toggle
 local Pill = Instance.new("TextButton")
-Pill.Size = UDim2.new(0, 60, 0, 30)
-Pill.Position = UDim2.new(0.5, -30, 0, 10)
-Pill.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+Pill.Size = UDim2.new(0, 80, 0, 30)
+Pill.Position = UDim2.new(0.5, -40, 0, 15)
+Pill.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 Pill.Text = "NHACK"
 Pill.TextColor3 = Color3.fromRGB(255, 38, 38)
 Pill.Font = Enum.Font.GothamBold
-Pill.TextSize = 10
+Pill.TextSize = 11
 Pill.Parent = ScreenGui
 Instance.new("UICorner", Pill).CornerRadius = UDim.new(1, 0)
 Instance.new("UIStroke", Pill).Color = Color3.fromRGB(255, 38, 38)
 
--- Main Frame
+-- Main Glass Frame
 local Main = Instance.new("Frame")
-Main.Size = UDim2.new(0, 400, 0, 300)
-Main.Position = UDim2.new(0.5, -200, 0.5, -150)
-Main.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-Main.BackgroundTransparency = 0.1
+Main.Size = UDim2.new(0, 420, 0, 320)
+Main.Position = UDim2.new(0.5, -210, 0.5, -160)
+Main.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
+Main.BackgroundTransparency = 0.15
 Main.BorderSizePixel = 0
 Main.Visible = true
 Main.Active = true
 Main.Draggable = true
 Main.Parent = ScreenGui
-Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 15)
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 12)
 
--- Top Navigation
+-- Navigation Bar
 local Navbar = Instance.new("Frame")
-Navbar.Size = UDim2.new(1, 0, 0, 45)
+Navbar.Size = UDim2.new(1, 0, 0, 50)
 Navbar.BackgroundTransparency = 1
 Navbar.Parent = Main
 
 local TabHolder = Instance.new("Frame")
-TabHolder.Size = UDim2.new(0, 200, 1, 0)
-TabHolder.Position = UDim2.new(0.5, -100, 0, 0)
+TabHolder.Size = UDim2.new(0, 300, 1, 0)
+TabHolder.Position = UDim2.new(0.5, -150, 0, 0)
 TabHolder.BackgroundTransparency = 1
 TabHolder.Parent = Navbar
 local TabList = Instance.new("UIListLayout", TabHolder)
 TabList.FillDirection = Enum.FillDirection.Horizontal
 TabList.HorizontalAlignment = Enum.HorizontalAlignment.Center
-TabList.Padding = UDim.new(0, 20)
+TabList.Padding = UDim.new(0, 15)
 
--- Container for Content
+-- Content Area
 local Content = Instance.new("Frame")
-Content.Size = UDim2.new(1, -30, 1, -60)
-Content.Position = UDim2.new(0, 15, 0, 50)
+Content.Size = UDim2.new(1, -30, 1, -70)
+Content.Position = UDim2.new(0, 15, 0, 55)
 Content.BackgroundTransparency = 1
 Content.Parent = Main
 
@@ -80,14 +81,15 @@ end
 
 local CombatPage = CreatePage("Combat")
 local VisualsPage = CreatePage("Visuals")
+local MovePage = CreatePage("Movement")
 
--- The "Card" Component
+-- UI Component: Feature Card
 local function AddFeature(parent, name, url, flag, isAddon)
     local card = Instance.new("TextButton")
-    card.Size = isAddon and UDim2.new(0.9, 0, 0, 35) or UDim2.new(1, 0, 0, 45)
-    card.BackgroundColor3 = isAddon and Color3.fromRGB(20, 20, 20) or Color3.fromRGB(25, 25, 25)
-    card.Text = (isAddon and "    + " or " ") .. name
-    card.TextColor3 = Color3.fromRGB(200, 200, 200)
+    card.Size = isAddon and UDim2.new(0.92, 0, 0, 35) or UDim2.new(1, 0, 0, 45)
+    card.BackgroundColor3 = isAddon and Color3.fromRGB(22, 22, 22) or Color3.fromRGB(28, 28, 28)
+    card.Text = (isAddon and "      └─ " or "   ") .. name
+    card.TextColor3 = Color3.fromRGB(160, 160, 160)
     card.TextXAlignment = Enum.TextXAlignment.Left
     card.Font = Enum.Font.GothamSemibold
     card.Parent = parent
@@ -95,57 +97,69 @@ local function AddFeature(parent, name, url, flag, isAddon)
 
     card.MouseButton1Click:Connect(function()
         _G[flag] = not _G[flag]
-        local targetColor = _G[flag] and Color3.fromRGB(255, 38, 38) or Color3.fromRGB(200, 200, 200)
-        TweenService:Create(card, TweenInfo.new(0.3), {TextColor3 = targetColor}):Play()
-        if _G[flag] and url then loadstring(game:HttpGet(url))() end
+        local active = _G[flag]
+        TweenService:Create(card, TweenInfo.new(0.25), {
+            TextColor3 = active and Color3.fromRGB(255, 38, 38) or Color3.fromRGB(160, 160, 160),
+            BackgroundColor3 = active and Color3.fromRGB(35, 25, 25) or (isAddon and Color3.fromRGB(22, 22, 22) or Color3.fromRGB(28, 28, 28))
+        }):Play()
+        if active and url then loadstring(game:HttpGet(url))() end
     end)
 end
 
--- Tab Logic
+-- UI Component: Tab Button
 local function AddTab(name, page)
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0, 80, 1, 0)
+    btn.Size = UDim2.new(0, 85, 1, 0)
     btn.BackgroundTransparency = 1
     btn.Text = name
-    btn.TextColor3 = Color3.fromRGB(150, 150, 150)
+    btn.TextColor3 = Color3.fromRGB(100, 100, 100)
     btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 12
     btn.Parent = TabHolder
 
     btn.MouseButton1Click:Connect(function()
         for _, v in pairs(Content:GetChildren()) do if v:IsA("ScrollingFrame") then v.Visible = false end end
-        for _, v in pairs(TabHolder:GetChildren()) do if v:IsA("TextButton") then v.TextColor3 = Color3.fromRGB(150, 150, 150) end end
+        for _, v in pairs(TabHolder:GetChildren()) do if v:IsA("TextButton") then 
+            TweenService:Create(v, TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(100, 100, 100)}):Play()
+        end end
         page.Visible = true
-        btn.TextColor3 = Color3.fromRGB(255, 38, 38)
+        TweenService:Create(btn, TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(255, 38, 38)}):Play()
     end)
 end
 
--- Setup
+-- Initialize Tabs
 AddTab("COMBAT", CombatPage)
 AddTab("VISUALS", VisualsPage)
+AddTab("MOVE", MovePage)
 
 local base = "https://raw.githubusercontent.com/Lumi-f3m/BloxStrike-Script/refs/heads/main/scripts/"
 
--- Combat
+-- Populate Pages
+-- COMBAT
 AddFeature(CombatPage, "Silent Aim", base.."silent_aim.lua", "SilentAimEnabled")
 AddFeature(CombatPage, "Silent Wallcheck", nil, "SilentAimWallcheck", true)
 AddFeature(CombatPage, "Auto Shoot", nil, "AutoShoot", true)
 
--- Visuals
+-- VISUALS
 AddFeature(VisualsPage, "Box ESP", base.."boxESP.lua", "BoxEspEnabled")
 AddFeature(VisualsPage, "ESP Wallcheck", nil, "VisualsWallcheck", true)
 AddFeature(VisualsPage, "Chams", base.."chams.lua", "ChamsEnabled")
 AddFeature(VisualsPage, "Chams Wallcheck", nil, "ChamsWallcheck", true)
 
--- Interaction
+-- MOVEMENT
+AddFeature(MovePage, "Auto BHop", base.."movement.lua", "BhopEnabled")
+AddFeature(MovePage, "Auto Strafe", nil, "AutoStrafe", true)
+AddFeature(MovePage, "Anti-Slow (16 Speed)", nil, "NoSlow", true)
+
+-- Menu Toggle Interaction
 Pill.MouseButton1Click:Connect(function() Main.Visible = not Main.Visible end)
+UserInputService.InputBegan:Connect(function(io, p)
+    if not p and io.KeyCode == Enum.KeyCode.M then Main.Visible = not Main.Visible end
+end)
+
+-- Set Default State
 CombatPage.Visible = true
 TabHolder:FindFirstChild("TextButton").TextColor3 = Color3.fromRGB(255, 38, 38)
-AddAddon(VisualsPage, "Chams Wallcheck", "ChamsWallcheck")
-
--- Menu Interaction
-MobileBtn.MouseButton1Click:Connect(function() Main.Visible = not Main.Visible end)
-UserInputService.InputBegan:Connect(function(io, p) 
-    if not p and io.KeyCode == Enum.KeyCode.M then Main.Visible = not Main.Visible end 
 end)
 
 CombatPage.Visible = true
