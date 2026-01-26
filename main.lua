@@ -9,9 +9,7 @@
 local CoreGui = game:GetService("CoreGui")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
-local HttpService = game:GetService("HttpService")
 
--- Prevent Multi-Loading
 if CoreGui:FindFirstChild("NHack_Main") then CoreGui.NHack_Main:Destroy() end
 
 local ScreenGui = Instance.new("ScreenGui")
@@ -19,7 +17,7 @@ ScreenGui.Name = "NHack_Main"
 ScreenGui.Parent = CoreGui
 ScreenGui.ResetOnSpawn = false
 
--- NH Floating Button (Mobile Toggle)
+-- Mobile Toggle Button
 local MobileBtn = Instance.new("TextButton")
 MobileBtn.Size = UDim2.new(0, 50, 0, 50)
 MobileBtn.Position = UDim2.new(0, 15, 0.5, -25)
@@ -27,43 +25,29 @@ MobileBtn.BackgroundColor3 = Color3.fromRGB(255, 38, 38)
 MobileBtn.Text = "NH"
 MobileBtn.TextColor3 = Color3.new(1, 1, 1)
 MobileBtn.Font = Enum.Font.GothamBold
-MobileBtn.TextSize = 18
 MobileBtn.Parent = ScreenGui
 Instance.new("UICorner", MobileBtn).CornerRadius = UDim.new(1, 0)
 
--- Main Menu Frame
+-- Menu Frame
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 240, 0, 360)
-MainFrame.Position = UDim2.new(0.5, -120, 0.5, -180)
-MainFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
-MainFrame.BorderSizePixel = 0
-MainFrame.Visible = true
+MainFrame.Size = UDim2.new(0, 220, 0, 320)
+MainFrame.Position = UDim2.new(0.5, -110, 0.5, -160)
+MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 MainFrame.Active = true
-MainFrame.Draggable = true -- High utility for mobile testing
+MainFrame.Draggable = true
+MainFrame.Visible = true
 MainFrame.Parent = ScreenGui
 Instance.new("UICorner", MainFrame)
 
-local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, 0, 0, 45)
-Title.Text = "NHack | Owner Console"
-Title.TextColor3 = Color3.fromRGB(255, 38, 38)
-Title.Font = Enum.Font.GothamBold
-Title.TextSize = 16
-Title.BackgroundTransparency = 1
-Title.Parent = MainFrame
-
 local Scroll = Instance.new("ScrollingFrame")
-Scroll.Size = UDim2.new(1, -20, 1, -60)
-Scroll.Position = UDim2.new(0, 10, 0, 50)
+Scroll.Size = UDim2.new(1, -20, 1, -50)
+Scroll.Position = UDim2.new(0, 10, 0, 45)
 Scroll.BackgroundTransparency = 1
-Scroll.CanvasSize = UDim2.new(0, 0, 1.8, 0) -- Extra space for sliders
-Scroll.ScrollBarThickness = 0 
+Scroll.ScrollBarThickness = 0
 Scroll.Parent = MainFrame
 Instance.new("UIListLayout", Scroll).Padding = UDim.new(0, 10)
 
--- --- UI COMPONENT FUNCTIONS ---
-
--- 1. Toggles
+-- --- UI Logic ---
 local function AddToggle(name, url, globalFlag)
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(1, 0, 0, 40)
@@ -76,20 +60,13 @@ local function AddToggle(name, url, globalFlag)
 
     btn.MouseButton1Click:Connect(function()
         _G[globalFlag] = not _G[globalFlag]
-        if _G[globalFlag] then
-            btn.BackgroundColor3 = Color3.fromRGB(255, 38, 38)
-            btn.TextColor3 = Color3.new(1, 1, 1)
-            btn.Text = name .. ": ON"
-            task.spawn(function() loadstring(game:HttpGet(url))() end)
-        else
-            btn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-            btn.TextColor3 = Color3.fromRGB(150, 150, 150)
-            btn.Text = name .. ": OFF"
-        end
+        btn.BackgroundColor3 = _G[globalFlag] and Color3.fromRGB(255, 38, 38) or Color3.fromRGB(25, 25, 25)
+        btn.TextColor3 = _G[globalFlag] and Color3.new(1, 1, 1) or Color3.fromRGB(150, 150, 150)
+        btn.Text = name .. (_G[globalFlag] and ": ON" or ": OFF")
+        if _G[globalFlag] then task.spawn(function() loadstring(game:HttpGet(url))() end) end
     end)
 end
 
--- 2. Sliders
 local function AddSlider(name, min, max, default, callback)
     local sliderFrame = Instance.new("Frame")
     sliderFrame.Size = UDim2.new(1, 0, 0, 50)
@@ -99,8 +76,7 @@ local function AddSlider(name, min, max, default, callback)
     local label = Instance.new("TextLabel")
     label.Size = UDim2.new(1, 0, 0, 20)
     label.Text = name .. ": " .. default
-    label.TextColor3 = Color3.fromRGB(200, 200, 200)
-    label.Font = Enum.Font.Gotham
+    label.TextColor3 = Color3.new(1, 1, 1)
     label.BackgroundTransparency = 1
     label.Parent = sliderFrame
 
@@ -118,43 +94,38 @@ local function AddSlider(name, min, max, default, callback)
     Instance.new("UICorner", fill)
 
     local function update(input)
-        local sizeX = math.clamp((input.Position.X - bar.AbsolutePosition.X) / bar.AbsoluteSize.X, 0, 1)
-        fill.Size = UDim2.new(sizeX, 0, 1, 0)
-        local val = math.floor(min + (max - min) * sizeX)
+        local pos = math.clamp((input.Position.X - bar.AbsolutePosition.X) / bar.AbsoluteSize.X, 0, 1)
+        fill.Size = UDim2.new(pos, 0, 1, 0)
+        local val = math.floor(min + (max - min) * pos)
         label.Text = name .. ": " .. val
         callback(val)
     end
 
     bar.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            local conn
-            conn = RunService.RenderStepped:Connect(function()
-                update(UserInputService:GetMouseLocation()) -- Works for Touch too
-                if not UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) then
-                    conn:Disconnect()
+            local connection
+            connection = UserInputService.InputChanged:Connect(function(move)
+                if move.UserInputType == Enum.UserInputType.MouseMovement or move.UserInputType == Enum.UserInputType.Touch then
+                    update(move)
+                end
+            end)
+            UserInputService.InputEnded:Connect(function(ended)
+                if ended.UserInputType == Enum.UserInputType.MouseButton1 or ended.UserInputType == Enum.UserInputType.Touch then
+                    connection:Disconnect()
                 end
             end)
         end
     end)
 end
 
--- --- LOADSTRINGS & CONFIG ---
+-- --- Load ---
 local base = "https://raw.githubusercontent.com/Lumi-f3m/BloxStrike-Script/refs/heads/main/scripts/"
-
--- ESP SECTION
-AddToggle("Box ESP", base .. "boxESP.lua", "BoxEspEnabled")
-AddToggle("Box Wallcheck", base .. "boxESP_Wallcheck.lua", "BoxWallEnabled")
-AddToggle("Chams", base .. "chams.lua", "ChamsEnabled")
-AddToggle("Chams Wallcheck", base .. "chams_wallcheck.lua", "ChamsWallEnabled")
-
--- AIMBOT SECTION
 AddToggle("Aimbot", base .. "aimbot.lua", "AimbotEnabled")
-AddSlider("FOV Radius", 30, 600, 100, function(v) _G.FOVRadius = v end)
-AddSlider("Smoothness", 0, 90, 50, function(v) _G.AimbotSmoothness = v / 100 end)
+AddSlider("FOV", 10, 500, 100, function(v) _G.FOVRadius = v end)
+AddSlider("Smooth", 0, 95, 50, function(v) _G.AimbotSmoothness = v/100 end)
+AddToggle("Box ESP", base .. "boxESP.lua", "BoxEspEnabled")
+AddToggle("Chams", base .. "chams.lua", "ChamsEnabled")
 
--- --- UTILS ---
-local function toggleUI() MainFrame.Visible = not MainFrame.Visible end
-MobileBtn.MouseButton1Click:Connect(toggleUI)
-UserInputService.InputBegan:Connect(function(io, p)
-    if not p and io.KeyCode == Enum.KeyCode.M then toggleUI() end
-end)
+-- --- Show/Hide ---
+MobileBtn.MouseButton1Click:Connect(function() MainFrame.Visible = not MainFrame.Visible end)
+UserInputService.InputBegan:Connect(function(io, p) if not p and io.KeyCode == Enum.KeyCode.M then MainFrame.Visible = not MainFrame.Visible end end)
