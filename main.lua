@@ -4,20 +4,23 @@
    This project will NOT be Obfuscated and we'll be testing ESP first :D (Check out the ESP.lua file)
    If you use any component in this script, Please give me some credit atleast. (I wouldn't mind either way)
 ]]
- -- I hope you enjoy it <3
+-- I hope you enjoy it <3
+
 local CoreGui = game:GetService("CoreGui")
 local UserInputService = game:GetService("UserInputService")
 
--- 1. Setup Main ScreenGui
+-- Ensure NHack doesn't double-load
+if CoreGui:FindFirstChild("NHack_Main") then CoreGui.NHack_Main:Destroy() end
+
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "NHack_Main"
 ScreenGui.Parent = CoreGui
 ScreenGui.ResetOnSpawn = false
 
--- 2. Floating Mobile Button
+-- NH Floating Button (Mobile)
 local MobileBtn = Instance.new("TextButton")
-MobileBtn.Size = UDim2.new(0, 50, 0, 50)
-MobileBtn.Position = UDim2.new(0, 10, 0.5, -25)
+MobileBtn.Size = UDim2.new(0, 45, 0, 45)
+MobileBtn.Position = UDim2.new(0, 10, 0.5, -22)
 MobileBtn.BackgroundColor3 = Color3.fromRGB(255, 38, 38)
 MobileBtn.Text = "NH"
 MobileBtn.TextColor3 = Color3.new(1, 1, 1)
@@ -25,74 +28,73 @@ MobileBtn.Font = Enum.Font.GothamBold
 MobileBtn.Parent = ScreenGui
 Instance.new("UICorner", MobileBtn).CornerRadius = UDim.new(1, 0)
 
--- 3. Main Menu Frame
+-- Main Menu
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 220, 0, 300)
-MainFrame.Position = UDim2.new(0.5, -110, 0.5, -150)
+MainFrame.Size = UDim2.new(0, 200, 0, 260)
+MainFrame.Position = UDim2.new(0.5, -100, 0.5, -130)
 MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 MainFrame.BorderSizePixel = 0
 MainFrame.Visible = true
+MainFrame.Active = true
+MainFrame.Draggable = true
 MainFrame.Parent = ScreenGui
 Instance.new("UICorner", MainFrame)
 
 local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, 0, 0, 45)
-Title.Text = "NHack Console"
+Title.Size = UDim2.new(1, 0, 0, 40)
+Title.Text = "NHack v1.0"
 Title.TextColor3 = Color3.fromRGB(255, 38, 38)
 Title.Font = Enum.Font.GothamBold
 Title.BackgroundTransparency = 1
 Title.Parent = MainFrame
 
 local Scroll = Instance.new("ScrollingFrame")
-Scroll.Size = UDim2.new(1, -20, 1, -60)
-Scroll.Position = UDim2.new(0, 10, 0, 50)
+Scroll.Size = UDim2.new(1, -20, 1, -50)
+Scroll.Position = UDim2.new(0, 10, 0, 45)
 Scroll.BackgroundTransparency = 1
-Scroll.ScrollBarThickness = 2
+Scroll.ScrollBarThickness = 0 -- Clean look for mobile
 Scroll.Parent = MainFrame
-Instance.new("UIListLayout", Scroll).Padding = UDim.new(0, 10)
+Instance.new("UIListLayout", Scroll).Padding = UDim.new(0, 8)
 
--- 4. TOGGLE FUNCTION (The Logic)
+-- Master Toggle Logic
 local function AddToggle(name, url, globalFlag)
     local active = false
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, 0, 0, 40)
-    btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    btn.Size = UDim2.new(1, 0, 0, 38)
+    btn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
     btn.Text = name .. ": OFF"
-    btn.TextColor3 = Color3.fromRGB(150, 150, 150)
+    btn.TextColor3 = Color3.fromRGB(120, 120, 120)
     btn.Font = Enum.Font.Gotham
     btn.Parent = Scroll
     Instance.new("UICorner", btn)
 
     btn.MouseButton1Click:Connect(function()
         active = not active
+        _G[globalFlag] = active
+        
         if active then
-            -- Turn ON
-            _G[globalFlag] = true 
             btn.BackgroundColor3 = Color3.fromRGB(255, 38, 38)
             btn.TextColor3 = Color3.new(1, 1, 1)
             btn.Text = name .. ": ON"
-            
-            -- Run the loadstring
             task.spawn(function()
                 loadstring(game:HttpGet(url))()
             end)
         else
-            -- Turn OFF
-            _G[globalFlag] = false -- This triggers the Kill-Switch in the script
-            btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-            btn.TextColor3 = Color3.fromRGB(150, 150, 150)
+            btn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+            btn.TextColor3 = Color3.fromRGB(120, 120, 120)
             btn.Text = name .. ": OFF"
         end
     end)
 end
 
--- 5. Add your Loadstrings with their unique Global Flags
-AddToggle("Box ESP", "https://raw.githubusercontent.com/Lumi-f3m/BloxStrike-Script/refs/heads/main/scripts/boxESP.lua", "BoxEspEnabled")
-AddToggle("Box Wallcheck", "https://raw.githubusercontent.com/Lumi-f3m/BloxStrike-Script/refs/heads/main/scripts/boxESP_Wallcheck.lua", "BoxWallEnabled")
-AddToggle("Chams", "https://raw.githubusercontent.com/Lumi-f3m/BloxStrike-Script/refs/heads/main/scripts/chams.lua", "ChamsEnabled")
-AddToggle("Chams Wallcheck", "https://raw.githubusercontent.com/Lumi-f3m/BloxStrike-Script/refs/heads/main/scripts/chams_wallcheck.lua", "ChamsWallEnabled")
+-- Loadstrings
+local base = "https://raw.githubusercontent.com/Lumi-f3m/BloxStrike-Script/refs/heads/main/scripts/"
+AddToggle("Box ESP", base .. "boxESP.lua", "BoxEspEnabled")
+AddToggle("Box Wallcheck", base .. "boxESP_Wallcheck.lua", "BoxWallEnabled")
+AddToggle("Chams", base .. "chams.lua", "ChamsEnabled")
+AddToggle("Chams Wallcheck", base .. "chams_wallcheck.lua", "ChamsWallEnabled")
 
--- 6. Visibility Toggles (M and Button)
+-- Interaction
 local function toggleUI() MainFrame.Visible = not MainFrame.Visible end
 MobileBtn.MouseButton1Click:Connect(toggleUI)
 UserInputService.InputBegan:Connect(function(io, p)
