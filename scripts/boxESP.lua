@@ -3,7 +3,7 @@ local RunService = game:GetService("RunService")
 local Camera = workspace.CurrentCamera
 local LocalPlayer = Players.LocalPlayer
 
--- Customization 🎨
+-- Customization 
 local BOX_COLOR = Color3.fromRGB(255, 38, 38) -- Tactical Red
 
 local function createEsp(player)
