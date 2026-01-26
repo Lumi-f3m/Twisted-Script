@@ -3,7 +3,7 @@ local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
--- Color Palette 🎨
+-- Color Palette 
 local COLOR_VISIBLE = Color3.fromRGB(0, 255, 127) -- Bright Green
 local COLOR_HIDDEN = Color3.fromRGB(255, 38, 38)  -- Bright Red
 
