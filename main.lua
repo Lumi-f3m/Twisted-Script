@@ -10,7 +10,7 @@ local CoreGui = game:GetService("CoreGui")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 
--- Cleanup existing UI
+-- Cleanup existing UI to prevent double-loading
 if CoreGui:FindFirstChild("NHack_Glass") then CoreGui.NHack_Glass:Destroy() end
 
 local ScreenGui = Instance.new("ScreenGui")
@@ -75,7 +75,7 @@ local function CreatePage(name)
     p.Visible = false
     p.ScrollBarThickness = 0
     p.Parent = Content
-    Instance.new("UIListLayout", p).Padding = UDim.new(0, 10)
+    Instance.new("UIListLayout", p).Padding = UDim.new(0, 8)
     return p
 end
 
@@ -83,7 +83,7 @@ local CombatPage = CreatePage("Combat")
 local VisualsPage = CreatePage("Visuals")
 local MovePage = CreatePage("Movement")
 
--- UI Component: Feature Card
+-- Feature Card Component
 local function AddFeature(parent, name, url, flag, isAddon)
     local card = Instance.new("TextButton")
     card.Size = isAddon and UDim2.new(0.92, 0, 0, 35) or UDim2.new(1, 0, 0, 45)
@@ -98,15 +98,31 @@ local function AddFeature(parent, name, url, flag, isAddon)
     card.MouseButton1Click:Connect(function()
         _G[flag] = not _G[flag]
         local active = _G[flag]
+        
+        -- Smooth visual feedback
         TweenService:Create(card, TweenInfo.new(0.25), {
             TextColor3 = active and Color3.fromRGB(255, 38, 38) or Color3.fromRGB(160, 160, 160),
             BackgroundColor3 = active and Color3.fromRGB(35, 25, 25) or (isAddon and Color3.fromRGB(22, 22, 22) or Color3.fromRGB(28, 28, 28))
         }):Play()
-        if active and url then loadstring(game:HttpGet(url))() end
+
+        -- Execution logic with Debugging
+        if active and url then
+            task.spawn(function()
+                local success, result = pcall(function()
+                    return game:HttpGet(url)
+                end)
+                
+                if success then
+                    loadstring(result)()
+                else
+                    warn("NHack Load Error: Could not reach URL -> " .. url)
+                end
+            end)
+        end
     end)
 end
 
--- UI Component: Tab Button
+-- Tab Button Component
 local function AddTab(name, page)
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(0, 85, 1, 0)
@@ -119,47 +135,46 @@ local function AddTab(name, page)
 
     btn.MouseButton1Click:Connect(function()
         for _, v in pairs(Content:GetChildren()) do if v:IsA("ScrollingFrame") then v.Visible = false end end
-        for _, v in pairs(TabHolder:GetChildren()) do if v:IsA("TextButton") then 
-            TweenService:Create(v, TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(100, 100, 100)}):Play()
-        end end
+        for _, v in pairs(TabHolder:GetChildren()) do 
+            if v:IsA("TextButton") then v.TextColor3 = Color3.fromRGB(100, 100, 100) end 
+        end
         page.Visible = true
-        TweenService:Create(btn, TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(255, 38, 38)}):Play()
+        btn.TextColor3 = Color3.fromRGB(255, 38, 38)
     end)
 end
 
--- Initialize Tabs
+-- Navigation Setup
 AddTab("COMBAT", CombatPage)
 AddTab("VISUALS", VisualsPage)
 AddTab("MOVE", MovePage)
 
+-- GitHub Paths (Ensure these match your repo exactly!)
 local base = "https://raw.githubusercontent.com/Lumi-f3m/BloxStrike-Script/refs/heads/main/scripts/"
 
--- Populate Pages
--- COMBAT
+-- COMBAT PAGE
 AddFeature(CombatPage, "Silent Aim", base.."silent_aim.lua", "SilentAimEnabled")
 AddFeature(CombatPage, "Silent Wallcheck", nil, "SilentAimWallcheck", true)
 AddFeature(CombatPage, "Auto Shoot", nil, "AutoShoot", true)
 
--- VISUALS
+-- VISUALS PAGE
 AddFeature(VisualsPage, "Box ESP", base.."boxESP.lua", "BoxEspEnabled")
 AddFeature(VisualsPage, "ESP Wallcheck", nil, "VisualsWallcheck", true)
 AddFeature(VisualsPage, "Chams", base.."chams.lua", "ChamsEnabled")
 AddFeature(VisualsPage, "Chams Wallcheck", nil, "ChamsWallcheck", true)
 
--- MOVEMENT
+-- MOVEMENT PAGE
 AddFeature(MovePage, "Auto BHop", base.."movement.lua", "BhopEnabled")
 AddFeature(MovePage, "Auto Strafe", nil, "AutoStrafe", true)
 AddFeature(MovePage, "Anti-Slow (16 Speed)", nil, "NoSlow", true)
 
--- Menu Toggle Interaction
+-- Toggle Menu Logic
 Pill.MouseButton1Click:Connect(function() Main.Visible = not Main.Visible end)
+
+-- Keybind for PC
 UserInputService.InputBegan:Connect(function(io, p)
     if not p and io.KeyCode == Enum.KeyCode.M then Main.Visible = not Main.Visible end
 end)
 
--- Set Default State
+-- Default Page
 CombatPage.Visible = true
 TabHolder:FindFirstChild("TextButton").TextColor3 = Color3.fromRGB(255, 38, 38)
-end)
-
-CombatPage.Visible = true
