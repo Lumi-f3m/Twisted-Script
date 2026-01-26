@@ -10,122 +10,107 @@ local CoreGui = game:GetService("CoreGui")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 
-if CoreGui:FindFirstChild("NHack_Main") then CoreGui.NHack_Main:Destroy() end
+if CoreGui:FindFirstChild("NHack_Premium") then CoreGui.NHack_Premium:Destroy() end
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "NHack_Main"
+ScreenGui.Name = "NHack_Premium"
 ScreenGui.Parent = CoreGui
-ScreenGui.ResetOnSpawn = false
 
--- Mobile Toggle Button
-local MobileBtn = Instance.new("TextButton")
-MobileBtn.Size = UDim2.new(0, 50, 0, 50)
-MobileBtn.Position = UDim2.new(0, 15, 0.5, -25)
-MobileBtn.BackgroundColor3 = Color3.fromRGB(255, 38, 38)
-MobileBtn.Text = "NH"
-MobileBtn.TextColor3 = Color3.new(1, 1, 1)
-MobileBtn.Font = Enum.Font.GothamBold
-MobileBtn.Parent = ScreenGui
-Instance.new("UICorner", MobileBtn).CornerRadius = UDim.new(1, 0)
+-- Main Menu
+local Main = Instance.new("Frame")
+Main.Size = UDim2.new(0, 550, 0, 350)
+Main.Position = UDim2.new(0.5, -275, 0.5, -175)
+Main.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+Main.BorderSizePixel = 0
+Main.Active = true
+Main.Draggable = true
+Main.Parent = ScreenGui
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 12)
 
--- Menu Frame
-local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 220, 0, 320)
-MainFrame.Position = UDim2.new(0.5, -110, 0.5, -160)
-MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-MainFrame.Active = true
-MainFrame.Draggable = true
-MainFrame.Visible = true
-MainFrame.Parent = ScreenGui
-Instance.new("UICorner", MainFrame)
+-- Sidebar
+local Sidebar = Instance.new("Frame")
+Sidebar.Size = UDim2.new(0, 140, 1, 0)
+Sidebar.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+Sidebar.BorderSizePixel = 0
+Sidebar.Parent = Main
+local SCorner = Instance.new("UICorner", Sidebar)
+SCorner.CornerRadius = UDim.new(0, 12)
 
-local Scroll = Instance.new("ScrollingFrame")
-Scroll.Size = UDim2.new(1, -20, 1, -50)
-Scroll.Position = UDim2.new(0, 10, 0, 45)
-Scroll.BackgroundTransparency = 1
-Scroll.ScrollBarThickness = 0
-Scroll.Parent = MainFrame
-Instance.new("UIListLayout", Scroll).Padding = UDim.new(0, 10)
+-- Logo (NHack)
+local Logo = Instance.new("TextLabel")
+Logo.Size = UDim2.new(1, 0, 0, 60)
+Logo.Text = "NHack"
+Logo.TextColor3 = Color3.fromRGB(255, 38, 38)
+Logo.Font = Enum.Font.GothamBold
+Logo.TextSize = 24
+Logo.BackgroundTransparency = 1
+Logo.Parent = Sidebar
 
--- --- UI Logic ---
-local function AddToggle(name, url, globalFlag)
+-- Tab Container
+local Pages = Instance.new("Frame")
+Pages.Size = UDim2.new(1, -150, 1, -20)
+Pages.Position = UDim2.new(0, 150, 0, 10)
+Pages.BackgroundTransparency = 1
+Pages.Parent = Main
+
+local function CreatePage(name)
+    local p = Instance.new("Frame")
+    p.Name = name
+    p.Size = UDim2.new(1, 0, 1, 0)
+    p.BackgroundTransparency = 1
+    p.Visible = false
+    p.Parent = Pages
+    Instance.new("UIListLayout", p).Padding = UDim.new(0, 10)
+    return p
+end
+
+local CombatPage = CreatePage("Combat")
+local VisualsPage = CreatePage("Visuals")
+
+-- Custom Components (Matching your image)
+local function AddToggle(parent, name, url, flag)
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, 0, 0, 40)
-    btn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-    btn.Text = name .. ": OFF"
+    btn.Size = UDim2.new(0.9, 0, 0, 35)
+    btn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    btn.Text = "  " .. name
     btn.TextColor3 = Color3.fromRGB(150, 150, 150)
+    btn.TextXAlignment = Enum.TextXAlignment.Left
     btn.Font = Enum.Font.Gotham
-    btn.Parent = Scroll
+    btn.Parent = parent
     Instance.new("UICorner", btn)
 
     btn.MouseButton1Click:Connect(function()
-        _G[globalFlag] = not _G[globalFlag]
-        btn.BackgroundColor3 = _G[globalFlag] and Color3.fromRGB(255, 38, 38) or Color3.fromRGB(25, 25, 25)
-        btn.TextColor3 = _G[globalFlag] and Color3.new(1, 1, 1) or Color3.fromRGB(150, 150, 150)
-        btn.Text = name .. (_G[globalFlag] and ": ON" or ": OFF")
-        if _G[globalFlag] then task.spawn(function() loadstring(game:HttpGet(url))() end) end
+        _G[flag] = not _G[flag]
+        btn.TextColor3 = _G[flag] and Color3.fromRGB(255, 38, 38) or Color3.fromRGB(150, 150, 150)
+        if _G[flag] then loadstring(game:HttpGet(url))() end
     end)
 end
 
-local function AddSlider(name, min, max, default, callback)
-    local sliderFrame = Instance.new("Frame")
-    sliderFrame.Size = UDim2.new(1, 0, 0, 50)
-    sliderFrame.BackgroundTransparency = 1
-    sliderFrame.Parent = Scroll
+-- Sidebar Buttons
+local function AddTab(name, page)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0.8, 0, 0, 40)
+    btn.Position = UDim2.new(0.1, 0, 0, 70 + (#Sidebar:GetChildren() * 45))
+    btn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    btn.Text = name
+    btn.TextColor3 = Color3.new(1,1,1)
+    btn.Font = Enum.Font.Gotham
+    btn.Parent = Sidebar
+    Instance.new("UICorner", btn)
 
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(1, 0, 0, 20)
-    label.Text = name .. ": " .. default
-    label.TextColor3 = Color3.new(1, 1, 1)
-    label.BackgroundTransparency = 1
-    label.Parent = sliderFrame
-
-    local bar = Instance.new("Frame")
-    bar.Size = UDim2.new(1, -10, 0, 6)
-    bar.Position = UDim2.new(0, 5, 0, 30)
-    bar.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-    bar.Parent = sliderFrame
-    Instance.new("UICorner", bar)
-
-    local fill = Instance.new("Frame")
-    fill.Size = UDim2.new((default-min)/(max-min), 0, 1, 0)
-    fill.BackgroundColor3 = Color3.fromRGB(255, 38, 38)
-    fill.Parent = bar
-    Instance.new("UICorner", fill)
-
-    local function update(input)
-        local pos = math.clamp((input.Position.X - bar.AbsolutePosition.X) / bar.AbsoluteSize.X, 0, 1)
-        fill.Size = UDim2.new(pos, 0, 1, 0)
-        local val = math.floor(min + (max - min) * pos)
-        label.Text = name .. ": " .. val
-        callback(val)
-    end
-
-    bar.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            local connection
-            connection = UserInputService.InputChanged:Connect(function(move)
-                if move.UserInputType == Enum.UserInputType.MouseMovement or move.UserInputType == Enum.UserInputType.Touch then
-                    update(move)
-                end
-            end)
-            UserInputService.InputEnded:Connect(function(ended)
-                if ended.UserInputType == Enum.UserInputType.MouseButton1 or ended.UserInputType == Enum.UserInputType.Touch then
-                    connection:Disconnect()
-                end
-            end)
-        end
+    btn.MouseButton1Click:Connect(function()
+        for _, v in pairs(Pages:GetChildren()) do if v:IsA("Frame") then v.Visible = false end end
+        page.Visible = true
     end)
 end
 
--- --- Load ---
+AddTab("Combat", CombatPage)
+AddTab("Visuals", VisualsPage)
+
+-- Populate Pages
 local base = "https://raw.githubusercontent.com/Lumi-f3m/BloxStrike-Script/refs/heads/main/scripts/"
-AddToggle("Aimbot", base .. "aimbot.lua", "AimbotEnabled")
-AddSlider("FOV", 10, 500, 100, function(v) _G.FOVRadius = v end)
-AddSlider("Smooth", 0, 95, 50, function(v) _G.AimbotSmoothness = v/100 end)
-AddToggle("Box ESP", base .. "boxESP.lua", "BoxEspEnabled")
-AddToggle("Chams", base .. "chams.lua", "ChamsEnabled")
+AddToggle(CombatPage, "Aimbot Toggle", base.."aimbot.lua", "AimbotEnabled")
+AddToggle(VisualsPage, "Box ESP", base.."boxESP.lua", "BoxEspEnabled")
+AddToggle(VisualsPage, "Chams", base.."chams.lua", "ChamsEnabled")
 
--- --- Show/Hide ---
-MobileBtn.MouseButton1Click:Connect(function() MainFrame.Visible = not MainFrame.Visible end)
-UserInputService.InputBegan:Connect(function(io, p) if not p and io.KeyCode == Enum.KeyCode.M then MainFrame.Visible = not MainFrame.Visible end end)
+CombatPage.Visible = true -- Default page
