@@ -1,6 +1,7 @@
 _G.BhopEnabled = true
 _G.AutoStrafe = true
 _G.NoSlow = true
+_G.TargetSpeed = 18 -- Your new preferred speed
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -17,16 +18,13 @@ RunService.RenderStepped:Connect(function()
     local hrp = char:FindFirstChild("HumanoidRootPart")
     if not hum or not hrp then return end
 
-    -- 1. THE "NO SLOW" (Owner God-Speed)
-    -- Forces WalkSpeed to 16 if the game tries to slow you down
+    -- 1. HARD-LOCK SPEED (The No-Slow)
+    -- This overrides landing lag, stuns, and weight
     if _G.NoSlow then
-        if hum.WalkSpeed < 16 then
-            hum.WalkSpeed = 16
-        end
+        hum.WalkSpeed = _G.TargetSpeed
     end
 
-    -- 2. AUTO BHOP
-    -- If holding Space, jump the millisecond you hit the ground
+    -- 2. AUTO BHOP (ChangeState is better for 18+ speed)
     if _G.BhopEnabled and UserInputService:IsKeyDown(Enum.KeyCode.Space) then
         if hum.FloorMaterial ~= Enum.Material.Air then
             hum:ChangeState(Enum.HumanoidStateType.Jumping)
@@ -34,15 +32,15 @@ RunService.RenderStepped:Connect(function()
     end
 
     -- 3. SOURCE-STYLE AUTO STRAFE
-    -- This increases your air control based on mouse movement
     if _G.AutoStrafe and hum.FloorMaterial == Enum.Material.Air then
         local currentMousePos = UserInputService:GetMouseLocation().X
         local delta = currentMousePos - lastMousePos
         
-        if delta > 0 then -- Moving Mouse Right
-            hrp.CFrame = hrp.CFrame * CFrame.new(-0.05, 0, 0)
-        elseif delta < 0 then -- Moving Mouse Left
-            hrp.CFrame = hrp.CFrame * CFrame.new(0.05, 0, 0)
+        -- Subtle air-drift math
+        if delta > 0 then
+            hrp.CFrame = hrp.CFrame * CFrame.new(-0.08, 0, 0) -- Adjusted for 18 speed
+        elseif delta < 0 then
+            hrp.CFrame = hrp.CFrame * CFrame.new(0.08, 0, 0)
         end
         
         lastMousePos = currentMousePos
