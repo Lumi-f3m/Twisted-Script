@@ -1,10 +1,11 @@
+_G.BoxWallEnabled = true
+
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local Camera = workspace.CurrentCamera
 local LocalPlayer = Players.LocalPlayer
 
 local function createEsp(player)
-    -- Initialize Only the Essentials
     local box = Drawing.new("Square")
     box.Thickness = 1
     box.Filled = false
@@ -18,27 +19,37 @@ local function createEsp(player)
 
     local connection
     connection = RunService.RenderStepped:Connect(function()
+        -- 1. THE KILL SWITCH
+        if _G.BoxWallEnabled == false then
+            box:Remove()
+            nameTag:Remove()
+            connection:Disconnect()
+            return
+        end
+
         local char = player.Character
-        -- 1. TEAM CHECK & LIFE CHECK
         if char and char:FindFirstChild("HumanoidRootPart") and char:FindFirstChild("Humanoid") then
             
-            -- Only show if they are on a different team (or if teams aren't being used)
+            -- 2. TEAM CHECK
             if player.Team == LocalPlayer.Team and player.Team ~= nil then
                 box.Visible = false; nameTag.Visible = false
                 return
             end
 
-            local hum = char.Humanoid
-            if hum.Health <= 0 then
-                box.Visible = false; nameTag.Visible = false
-                return 
-            end
-
             local hrp = char.HumanoidRootPart
+            local head = char:FindFirstChild("Head")
             local pos, onScreen = Camera:WorldToViewportPoint(hrp.Position)
 
-            if onScreen then
-                -- 2. ACCURATE BOUNDS
+            if onScreen and head then
+                -- 3. WALLCHECK MATH (Raycast)
+                local rayParams = RaycastParams.new()
+                rayParams.FilterDescendantsInstances = {LocalPlayer.Character, char}
+                local ray = workspace:Raycast(Camera.CFrame.Position, (head.Position - Camera.CFrame.Position), rayParams)
+                
+                -- Color Logic: Green if visible, Red if behind wall
+                local color = (not ray) and Color3.fromRGB(0, 255, 127) or Color3.fromRGB(255, 38, 38)
+
+                -- 4. DYNAMIC BOX SIZING
                 local cf, size = char:GetBoundingBox()
                 local corners = {
                     cf * CFrame.new(size.X/2, size.Y/2, size.Z/2),
@@ -52,13 +63,6 @@ local function createEsp(player)
                     maxX, maxY = math.max(maxX, sPos.X), math.max(maxY, sPos.Y)
                 end
 
-                -- 3. VISIBILITY LOGIC (RED/GREEN)
-                local rayParams = RaycastParams.new()
-                rayParams.FilterDescendantsInstances = {LocalPlayer.Character, char}
-                local ray = workspace:Raycast(Camera.CFrame.Position, (hrp.Position - Camera.CFrame.Position), rayParams)
-                local color = (not ray) and Color3.fromRGB(0, 255, 127) or Color3.fromRGB(255, 38, 38)
-
-                -- 4. APPLY VISUALS
                 box.Size = Vector2.new(maxX - minX, maxY - minY)
                 box.Position = Vector2.new(minX, minY)
                 box.Color = color
@@ -77,12 +81,10 @@ local function createEsp(player)
 
     Players.PlayerRemoving:Connect(function(p)
         if p == player then
-            connection:Disconnect()
-            box:Remove(); nameTag:Remove()
+            box:Remove(); nameTag:Remove(); connection:Disconnect()
         end
     end)
 end
 
--- Initialize
 for _, p in pairs(Players:GetPlayers()) do if p ~= LocalPlayer then createEsp(p) end end
 Players.PlayerAdded:Connect(createEsp)
